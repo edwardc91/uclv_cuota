@@ -10,8 +10,21 @@ import curses
 __author__ = 'eduardo'
 
 
+def init_curses():
+    stdscr = curses.initscr()
+    # curses.noecho()
+    curses.cbreak()
+    if curses.has_colors():
+        curses.start_color()
+        curses.use_default_colors()
+        curses_init_pairs()
+    return stdscr
+
+
 def curses_init_pairs():
     curses.init_pair(2, curses.COLOR_BLUE, -1)
+    curses.init_pair(3, curses.COLOR_GREEN, -1)
+    curses.init_pair(4, curses.COLOR_RED, -1)
 
 
 def end_curses(stdscr):
@@ -28,6 +41,14 @@ def curses_main_screen_init(stdscr, user):
 
     screen.addstr(1, 34, user, curses.color_pair(2))
     screen.refresh()
+    return screen
+
+
+def curses_init_quote_window(stdscr):
+    quote_window = stdscr.subwin(15, 60, 3, 1)
+    quote_window.box()
+    quote_window.refresh()
+    return quote_window
 
 
 def get_real_weekday(index):
@@ -44,6 +65,32 @@ def format_week_json(json_dic):
         index += 1
 
     return result
+
+
+def update_quotes_windows(quote_window, json_week, user_quote, total_month, total_week, int_day):
+    json_dic = json_week[0]
+    format_con = format_week_json(json_dic)
+
+    if user_quote > total_week:
+        string = "%.2f" % (user_quote - total_week)
+        quote_window.addstr(1, 1, "You have left ")
+        quote_window.addstr(1, 15, string, curses.color_pair(3))
+        quote_window.addstr(1, 15 + len(string), " MB approximately")
+    else:
+        string = "%.2f" % (-1 * (user_quote - total_week))
+        quote_window.addstr(1, 1, "You have run out you quote in ")
+        quote_window.addstr(1, 31, string, curses.color_pair(4))
+        quote_window.addstr(1, 31 + len(string), " MB approximately")
+
+    string = "%d" % (format_con[0])
+    quote_window.addstr(2, 1, "Today you has consumed ")
+    quote_window.addstr(2, 24 + len(string), " MB approximately")
+    if format_con[0] <= 50:
+        quote_window.addstr(2, 24, string, curses.color_pair(3))
+    else:
+        quote_window.addstr(2, 24, string, curses.color_pair(4))
+
+    quote_window.refresh()
 
 
 def print_json_week_output(json_week, user_quote, total_month, total_week, int_day):
@@ -110,7 +157,7 @@ def connect_api(user, request_type):
         json = result.json()
         return json
     else:
-        print bcolors.FAIL + "Is not working right now" + bcolors.ENDC
+        print "Is not working right now"
         exit(0)
 
 
@@ -125,38 +172,33 @@ def main():
     args = argp.parse_args()
     user = args.user
 
+    json_quote = connect_api(user, 'quote')
+    if len(json_quote) == 0:
+        print "The user " + user + " doesn't exists"
+        exit(0)
+
     system("clear")
-    stdscr = curses.initscr()
-    curses.noecho()
-    curses.cbreak()
-    if curses.has_colors():
-        curses.start_color()
-        curses.use_default_colors()
-        curses_init_pairs()
 
-    curses_main_screen_init(stdscr, user)
+    stdscr = init_curses()
+    screen = curses_main_screen_init(stdscr, user)
+    quote_window = curses_init_quote_window(stdscr)
 
-    i = 0
     try:
         while True:
-            i += 1
-            i -= 1
-    # json_quote = connect_api(user, 'quote')
-    #
-    #     if len(json_quote) == 0:
-    #         print "The user " + bcolors.WARNING + user + bcolors.ENDC + " doesn't exists"
-    #         exit(0)
-    #
-    #     quote_dict = json_quote[0]
-    #     int_day = date.today().weekday()
-    #     user_quote = int(quote_dict['cuota']) / 1000000
-    #
-    #     total_month = int(quote_dict['total30']) / 1000000
-    #     total_week = float(quote_dict['total']) / 1000000
-    #     json_week = connect_api(user, 'week')
-    #     print_json_week_output(json_week, user_quote, total_month, total_week, int_day)
-    #     sleep(5)
-    #     system("clear")
+            json_quote = connect_api(user, 'quote')
+
+            quote_dict = json_quote[0]
+            int_day = date.today().weekday()
+            user_quote = int(quote_dict['cuota']) / 1000000
+
+            total_month = int(quote_dict['total30']) / 1000000
+            total_week = float(quote_dict['total']) / 1000000
+            json_week = connect_api(user, 'week')
+
+            update_quotes_windows(quote_window, json_week, user_quote, total_month, total_week, int_day)
+            # print_json_week_output(json_week, user_quote, total_month, total_week, int_day)
+            sleep(5)
+
     except KeyboardInterrupt:
         pass
     end_curses(stdscr)
