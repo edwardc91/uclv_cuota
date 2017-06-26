@@ -6,6 +6,7 @@ from time import sleep
 from datetime import date
 from os import system
 import curses
+from threading import *
 
 __author__ = 'eduardo'
 
@@ -13,6 +14,7 @@ __author__ = 'eduardo'
 def init_curses():
     stdscr = curses.initscr()
     # curses.noecho()
+    curses.curs_set(0)
     curses.cbreak()
     if curses.has_colors():
         curses.start_color()
@@ -76,7 +78,21 @@ def format_week_json(json_dic):
     return result
 
 
-def update_quotes_windows(quote_window, json_week, user_quote, total_month, total_week, int_day):
+def update_text_show(screen):
+    screen.addstr(20, 2, "Updating", curses.A_BOLD)
+    i = 1
+    while True:
+        if i != 4:
+            screen.addch(20, 10 + i, ".", curses.A_BOLD)
+        else:
+            screen.delch(20, 13)
+            screen.delch(20, 12)
+            screen.delch(20, 11)
+            i = 1
+        sleep(3)
+
+
+def update_quotes_windows(quote_window, totals_window, json_week, user_quote, total_month, total_week, int_day):
     json_dic = json_week[0]
     format_con = format_week_json(json_dic)
 
@@ -124,63 +140,42 @@ def update_quotes_windows(quote_window, json_week, user_quote, total_month, tota
     quote_window.addstr(line, 25, tomorrow_quote)
     quote_window.addstr(line, 25 + len(tomorrow_quote), " MB approximately")
 
-    quote_window.refresh()
+    totals_window.addstr(1, 3, "You has consumed in the week ")
+    string_total_week = "%d" % total_week
+    totals_window.addstr(1, 32 + len(string_total_week), " of ")
+    string_user_quote = "%d" % user_quote
+    totals_window.addstr(1, 36 + len(string_total_week), string_user_quote, curses.color_pair(5))
+    totals_window.addstr(1, 36 + len(string_total_week) + len(string_user_quote), " MBs")
 
-
-def print_json_week_output(json_week, user_quote, total_month, total_week, int_day):
-    json_dic = json_week[0]
-    format_con = format_week_json(json_dic)
-    print "Last seven days record for user %s%s%s:" % (bcolors.OKBLUE, json_dic['usuario'], bcolors.ENDC)
-
-    if user_quote > total_week:
-        print "You have left %s%.2f%s MB approximately" % (bcolors.OKGREEN, user_quote - total_week, bcolors.ENDC)
-    else:
-        print "You have run out you quote in %s%.2f%s MB approximately" % (
-            bcolors.FAIL, -1 * (user_quote - total_week), bcolors.ENDC)
-
-    today = ""
-    if format_con[0] <= 50:
-        today = "%s%d%s" % (bcolors.OKGREEN, format_con[0], bcolors.ENDC)
-    else:
-        today = "%s%d%s" % (bcolors.WARNING, format_con[0], bcolors.ENDC)
-
-    print "Today you has consumed %s MB approximately" % today
-
-    index = 1
-    while index < len(format_con):
-        subs = int_day - index
-        if format_con[index] <= 50:
-            print "The last %s%s%s you consumed %s%d%s MB approximately" % (bcolors.WARNING,
-                                                                            get_real_weekday(subs), bcolors.ENDC,
-                                                                            bcolors.OKGREEN, format_con[index],
-                                                                            bcolors.ENDC)
-        else:
-            print "The last %s%s%s you consumed %s%d%s MB approximately" % (bcolors.WARNING,
-                                                                            get_real_weekday(subs), bcolors.ENDC,
-                                                                            bcolors.FAIL, format_con[index],
-                                                                            bcolors.ENDC)
-        index += 1
-
-    print "Tomorrow you will have %d MB approximately" % (int(format_con[6]))
-
-    cons = ""
     if total_week <= user_quote:
-        cons = "%s%d%s" % (bcolors.OKGREEN, total_week, bcolors.ENDC)
+        totals_window.addstr(1, 32, string_total_week, curses.color_pair(3))
     else:
-        cons = "%s%d%s" % (bcolors.FAIL, total_week, bcolors.ENDC)
+        totals_window.addstr(1, 32, string_total_week, curses.color_pair(4))
 
-    print "You has consumed in the week %s of %s%d%s MB" % (cons, bcolors.WARNING, user_quote, bcolors.ENDC)
+    totals_window.addstr(2, 3, "You has consumed in the month ")
+    string_total_month = "%d" % (total_month + user_quote)
+    totals_window.addstr(2, 33 + len(string_total_month), " of ")
+    string_user_quote = "%d" % (user_quote * 5)
+    totals_window.addstr(2, 37 + len(string_total_month), string_user_quote, curses.color_pair(5))
+    totals_window.addstr(2, 37 + len(string_total_month) + len(string_user_quote), " MBs")
 
     if total_month <= user_quote * 5:
-        cons = "%s%d%s" % (bcolors.OKGREEN, total_month + user_quote, bcolors.ENDC)
+        totals_window.addstr(2, 33, string_total_month, curses.color_pair(3))
     else:
-        cons = "%s%d%s" % (bcolors.FAIL, total_month + user_quote, bcolors.ENDC)
+        totals_window.addstr(2, 33, string_total_month, curses.color_pair(4))
 
-    print "You has consumed in the month %s of %s%d%s MB" % (cons, bcolors.WARNING, user_quote * 5, bcolors.ENDC)
-    print bcolors.BOLD + "Press \"Ctrl+C\" to exit" + bcolors.ENDC
+    # if total_month <= user_quote * 5:
+    #     cons = "%s%d%s" % (bcolors.OKGREEN, total_month + user_quote, bcolors.ENDC)
+    # else:
+    #     cons = "%s%d%s" % (bcolors.FAIL, total_month + user_quote, bcolors.ENDC)
+    #
+    # print "You has consumed in the month %s of %s%d%s MB" % (cons, bcolors.WARNING, user_quote * 5, bcolors.ENDC)
+
+    quote_window.refresh()
+    totals_window.refresh()
 
 
-def connect_api(user, request_type):
+def connect_api(user, request_type, using_curses, quote_window):
     if request_type == "week":
         params = {'view': 'user_week', 'user': user}
         result = requests.get(url="http://api.uclv.edu.cu/sta", params=params)
@@ -191,8 +186,14 @@ def connect_api(user, request_type):
         json = result.json()
         return json
     else:
-        print "Is not working right now"
-        exit(0)
+        if not using_curses:
+            print "Is not working right now"
+            exit(0)
+        else:
+            quote_window.clear()
+            quote_window.box()
+            quote_window.addstr(5, 20, "Loading...", curses.A_BLINK)
+            quote_window.refresh()
 
 
 def main():
@@ -206,7 +207,7 @@ def main():
     args = argp.parse_args()
     user = args.user
 
-    json_quote = connect_api(user, 'quote')
+    json_quote = connect_api(user, 'quote', False, None)
     if len(json_quote) == 0:
         print "The user " + user + " doesn't exists"
         exit(0)
@@ -218,9 +219,12 @@ def main():
     quote_window = curses_init_quote_window(stdscr)
     totals_windows = curses_init_totals_window(stdscr)
 
+    quote_window.addstr(5, 20, "Loading...", curses.A_BLINK)
+    quote_window.refresh()
+
     try:
         while True:
-            json_quote = connect_api(user, 'quote')
+            json_quote = connect_api(user, 'quote', True, quote_window)
 
             quote_dict = json_quote[0]
             int_day = date.today().weekday()
@@ -228,9 +232,11 @@ def main():
 
             total_month = int(quote_dict['total30']) / 1000000
             total_week = float(quote_dict['total']) / 1000000
-            json_week = connect_api(user, 'week')
+            json_week = connect_api(user, 'week', True, quote_window)
 
-            update_quotes_windows(quote_window, json_week, user_quote, total_month, total_week, int_day)
+            quote_window.clear()
+            quote_window.box()
+            update_quotes_windows(quote_window, totals_windows, json_week, user_quote, total_month, total_week, int_day)
             # print_json_week_output(json_week, user_quote, total_month, total_week, int_day)
             sleep(5)
 
