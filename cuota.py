@@ -5,19 +5,29 @@ from argparse import ArgumentParser
 from time import sleep
 from datetime import date
 from os import system
+import curses
 
 __author__ = 'eduardo'
 
 
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+def curses_init_pairs():
+    curses.init_pair(2, curses.COLOR_BLUE, -1)
+
+
+def end_curses(stdscr):
+    curses.nocbreak()
+    stdscr.keypad(0)
+    curses.echo()
+    curses.endwin()
+
+
+def curses_main_screen_init(stdscr, user):
+    screen = stdscr.subwin(23, 79, 0, 0)
+    screen.box()
+    screen.addstr(1, 2, "Last seven days record for user ")
+
+    screen.addstr(1, 34, user, curses.color_pair(2))
+    screen.refresh()
 
 
 def get_real_weekday(index):
@@ -86,7 +96,7 @@ def print_json_week_output(json_week, user_quote, total_month, total_week, int_d
         cons = "%s%d%s" % (bcolors.FAIL, total_month + user_quote, bcolors.ENDC)
 
     print "You has consumed in the month %s of %s%d%s MB" % (cons, bcolors.WARNING, user_quote * 5, bcolors.ENDC)
-    print bcolors.BOLD + "Press \"Ctrl+C\" to exit" +bcolors.ENDC
+    print bcolors.BOLD + "Press \"Ctrl+C\" to exit" + bcolors.ENDC
 
 
 def connect_api(user, request_type):
@@ -115,29 +125,41 @@ def main():
     args = argp.parse_args()
     user = args.user
 
-    # init(autoreset=True)
-
     system("clear")
+    stdscr = curses.initscr()
+    curses.noecho()
+    curses.cbreak()
+    if curses.has_colors():
+        curses.start_color()
+        curses.use_default_colors()
+        curses_init_pairs()
+
+    curses_main_screen_init(stdscr, user)
+
+    i = 0
     try:
         while True:
-            json_quote = connect_api(user, 'quote')
-
-            if len(json_quote) == 0:
-                print "The user " + bcolors.WARNING + user + bcolors.ENDC + " doesn't exists"
-                exit(0)
-
-            quote_dict = json_quote[0]
-            int_day = date.today().weekday()
-            user_quote = int(quote_dict['cuota']) / 1000000
-
-            total_month = int(quote_dict['total30']) / 1000000
-            total_week = float(quote_dict['total']) / 1000000
-            json_week = connect_api(user, 'week')
-            print_json_week_output(json_week, user_quote, total_month, total_week, int_day)
-            sleep(5)
-            system("clear")
+            i += 1
+            i -= 1
+    # json_quote = connect_api(user, 'quote')
+    #
+    #     if len(json_quote) == 0:
+    #         print "The user " + bcolors.WARNING + user + bcolors.ENDC + " doesn't exists"
+    #         exit(0)
+    #
+    #     quote_dict = json_quote[0]
+    #     int_day = date.today().weekday()
+    #     user_quote = int(quote_dict['cuota']) / 1000000
+    #
+    #     total_month = int(quote_dict['total30']) / 1000000
+    #     total_week = float(quote_dict['total']) / 1000000
+    #     json_week = connect_api(user, 'week')
+    #     print_json_week_output(json_week, user_quote, total_month, total_week, int_day)
+    #     sleep(5)
+    #     system("clear")
     except KeyboardInterrupt:
         pass
+    end_curses(stdscr)
 
 
 if __name__ == '__main__':
