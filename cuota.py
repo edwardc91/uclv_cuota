@@ -6,7 +6,7 @@ from time import sleep
 from datetime import date
 from os import system
 import curses
-from threading import *
+from multiprocessing import Process as Task, Queue
 
 __author__ = 'eduardo'
 
@@ -38,12 +38,12 @@ def end_curses(stdscr):
 
 
 def curses_main_screen_init(stdscr, user):
-    screen = stdscr.subwin(23, 79, 0, 0)
+    screen = stdscr.subwin(19, 79, 0, 0)
     screen.box()
     screen.addstr(1, 5, "Last seven days record for user ", curses.A_BOLD)
 
     screen.addstr(1, 37, user, curses.color_pair(2))
-    screen.addstr(22, 50, "Press \"Ctrl+C\" to exit", curses.A_BOLD)
+    screen.addstr(18, 50, "Press \"Ctrl+C\" to exit", curses.A_BOLD)
     screen.refresh()
     return screen
 
@@ -62,6 +62,13 @@ def curses_init_totals_window(stdscr):
     return totals_window
 
 
+def curses_init_update_window(stdscr):
+    update_window = stdscr.subwin(3, 20, 20, 5)
+    update_window.box()
+    update_window.refresh()
+    return update_window
+
+
 def get_real_weekday(index):
     list_real_weekday = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
     return list_real_weekday[index]
@@ -78,18 +85,20 @@ def format_week_json(json_dic):
     return result
 
 
-def update_text_show(screen):
-    screen.addstr(20, 2, "Updating", curses.A_BOLD)
+def update_text_show(update_window):
+    update_window.addstr(1, 2, "Updating", curses.A_BOLD)
     i = 1
     while True:
+        sleep(0.6)
         if i != 4:
-            screen.addch(20, 10 + i, ".", curses.A_BOLD)
+            update_window.addstr(1, 9 + i, ".", curses.A_BOLD)
+            i += 1
         else:
-            screen.delch(20, 13)
-            screen.delch(20, 12)
-            screen.delch(20, 11)
+            update_window.addstr(1, 12, " ")
+            update_window.addstr(1, 11, " ")
+            update_window.addstr(1, 10, " ")
             i = 1
-        sleep(3)
+        update_window.refresh()
 
 
 def update_quotes_windows(quote_window, totals_window, json_week, user_quote, total_month, total_week, int_day):
@@ -190,9 +199,9 @@ def connect_api(user, request_type, using_curses, quote_window):
             print "Is not working right now"
             exit(0)
         else:
-            quote_window.clear()
+            # quote_window.clear()
             quote_window.box()
-            quote_window.addstr(5, 20, "Loading...", curses.A_BLINK)
+            quote_window.addstr(5, 20, "Loading...", curses.A_REVERSE)
             quote_window.refresh()
 
 
@@ -218,9 +227,14 @@ def main():
     screen = curses_main_screen_init(stdscr, user)
     quote_window = curses_init_quote_window(stdscr)
     totals_windows = curses_init_totals_window(stdscr)
+    # update_windows = curses_init_update_window(stdscr)
 
-    quote_window.addstr(5, 20, "Loading...", curses.A_BLINK)
+    quote_window.addstr(5, 20, "Loading...", curses.A_REVERSE)
     quote_window.refresh()
+
+    # args = (update_windows,)
+    # child = Task(target=update_text_show, args=args)
+    # child.start()
 
     try:
         while True:
@@ -234,7 +248,7 @@ def main():
             total_week = float(quote_dict['total']) / 1000000
             json_week = connect_api(user, 'week', True, quote_window)
 
-            quote_window.clear()
+            # quote_window.clear()
             quote_window.box()
             update_quotes_windows(quote_window, totals_windows, json_week, user_quote, total_month, total_week, int_day)
             # print_json_week_output(json_week, user_quote, total_month, total_week, int_day)
@@ -242,7 +256,10 @@ def main():
 
     except KeyboardInterrupt:
         pass
+
     end_curses(stdscr)
+    # child.terminate()
+    exit(0)
 
 
 if __name__ == '__main__':
