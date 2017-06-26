@@ -25,6 +25,7 @@ def curses_init_pairs():
     curses.init_pair(2, curses.COLOR_BLUE, -1)
     curses.init_pair(3, curses.COLOR_GREEN, -1)
     curses.init_pair(4, curses.COLOR_RED, -1)
+    curses.init_pair(5, curses.COLOR_YELLOW, -1)
 
 
 def end_curses(stdscr):
@@ -37,18 +38,26 @@ def end_curses(stdscr):
 def curses_main_screen_init(stdscr, user):
     screen = stdscr.subwin(23, 79, 0, 0)
     screen.box()
-    screen.addstr(1, 2, "Last seven days record for user ")
+    screen.addstr(1, 5, "Last seven days record for user ", curses.A_BOLD)
 
-    screen.addstr(1, 34, user, curses.color_pair(2))
+    screen.addstr(1, 37, user, curses.color_pair(2))
+    screen.addstr(22, 50, "Press \"Ctrl+C\" to exit", curses.A_BOLD)
     screen.refresh()
     return screen
 
 
 def curses_init_quote_window(stdscr):
-    quote_window = stdscr.subwin(15, 60, 3, 1)
+    quote_window = stdscr.subwin(11, 60, 3, 8)
     quote_window.box()
     quote_window.refresh()
     return quote_window
+
+
+def curses_init_totals_window(stdscr):
+    totals_window = stdscr.subwin(4, 60, 14, 8)
+    totals_window.box()
+    totals_window.refresh()
+    return totals_window
 
 
 def get_real_weekday(index):
@@ -73,22 +82,47 @@ def update_quotes_windows(quote_window, json_week, user_quote, total_month, tota
 
     if user_quote > total_week:
         string = "%.2f" % (user_quote - total_week)
-        quote_window.addstr(1, 1, "You have left ")
-        quote_window.addstr(1, 15, string, curses.color_pair(3))
-        quote_window.addstr(1, 15 + len(string), " MB approximately")
+        quote_window.addstr(1, 2, "You have left ")
+        quote_window.addstr(1, 16, string, curses.color_pair(3))
+        quote_window.addstr(1, 16 + len(string), " MB approximately")
     else:
         string = "%.2f" % (-1 * (user_quote - total_week))
-        quote_window.addstr(1, 1, "You have run out you quote in ")
-        quote_window.addstr(1, 31, string, curses.color_pair(4))
-        quote_window.addstr(1, 31 + len(string), " MB approximately")
+        quote_window.addstr(1, 2, "You have run out you quote in ")
+        quote_window.addstr(1, 32, string, curses.color_pair(4))
+        quote_window.addstr(1, 32 + len(string), " MB approximately")
 
     string = "%d" % (format_con[0])
-    quote_window.addstr(2, 1, "Today you has consumed ")
-    quote_window.addstr(2, 24 + len(string), " MB approximately")
+    quote_window.addstr(2, 2, "Today you has consumed ")
+    quote_window.addstr(2, 25 + len(string), " MB approximately")
     if format_con[0] <= 50:
-        quote_window.addstr(2, 24, string, curses.color_pair(3))
+        quote_window.addstr(2, 25, string, curses.color_pair(3))
     else:
-        quote_window.addstr(2, 24, string, curses.color_pair(4))
+        quote_window.addstr(2, 25, string, curses.color_pair(4))
+
+    days_index = 1
+    line = 3
+    while days_index < len(format_con):
+        subs = int_day - days_index
+        quote_window.addstr(line, 2, "The last ")
+        day_string = get_real_weekday(subs)
+        quote_window.addstr(line, 11, day_string, curses.color_pair(5))
+        current_x_pos = 11 + len(day_string)
+        quote_window.addstr(line, current_x_pos, " you consumed ")
+        current_x_pos += 14
+        day_consume = "%d" % (format_con[days_index])
+        if format_con[days_index] <= 50:
+            quote_window.addstr(line, current_x_pos, day_consume, curses.color_pair(3))
+        else:
+            quote_window.addstr(line, current_x_pos, day_consume, curses.color_pair(4))
+        current_x_pos += len(day_consume)
+        quote_window.addstr(line, current_x_pos, " MB approximately")
+        days_index += 1
+        line += 1
+
+    quote_window.addstr(line, 2, "Tomorrow you will have ")
+    tomorrow_quote = "%d" % (int(format_con[6]))
+    quote_window.addstr(line, 25, tomorrow_quote)
+    quote_window.addstr(line, 25 + len(tomorrow_quote), " MB approximately")
 
     quote_window.refresh()
 
@@ -182,6 +216,7 @@ def main():
     stdscr = init_curses()
     screen = curses_main_screen_init(stdscr, user)
     quote_window = curses_init_quote_window(stdscr)
+    totals_windows = curses_init_totals_window(stdscr)
 
     try:
         while True:
