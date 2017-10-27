@@ -6,7 +6,7 @@ from time import sleep
 from datetime import date
 from os import system
 import curses
-from multiprocessing import Process as Task, Queue
+# from multiprocessing import Process as Task, Queue
 
 __author__ = 'eduardo'
 
@@ -38,12 +38,12 @@ def end_curses(stdscr):
 
 
 def curses_main_screen_init(stdscr, user):
-    screen = stdscr.subwin(19, 79, 0, 0)
+    screen = stdscr.subwin(19, 74, 0, 0)
     screen.box()
     screen.addstr(1, 5, "Last seven days record for user ", curses.A_BOLD)
 
     screen.addstr(1, 37, user, curses.color_pair(2))
-    screen.addstr(18, 50, "Press \"Ctrl+C\" to exit", curses.A_BOLD)
+    screen.addstr(18, 40, "Press \"Ctrl+C\" to exit", curses.A_BOLD)
     screen.refresh()
     return screen
 
@@ -85,20 +85,20 @@ def format_week_json(json_dic):
     return result
 
 
-def update_text_show(update_window):
-    update_window.addstr(1, 2, "Updating", curses.A_BOLD)
-    i = 1
-    while True:
-        sleep(0.6)
-        if i != 4:
-            update_window.addstr(1, 9 + i, ".", curses.A_BOLD)
-            i += 1
-        else:
-            update_window.addstr(1, 12, " ")
-            update_window.addstr(1, 11, " ")
-            update_window.addstr(1, 10, " ")
-            i = 1
-        update_window.refresh()
+# def update_text_show(update_window):
+#     update_window.addstr(1, 2, "Updating", curses.A_BOLD)
+#     i = 1
+#     while True:
+#         sleep(0.6)
+#         if i != 4:
+#             update_window.addstr(1, 9 + i, ".", curses.A_BOLD)
+#             i += 1
+#         else:
+#             update_window.addstr(1, 12, " ")
+#             update_window.addstr(1, 11, " ")
+#             update_window.addstr(1, 10, " ")
+#             i = 1
+#         update_window.refresh()
 
 
 def update_quotes_windows(quote_window, totals_window, json_week, user_quote, total_month, total_week, int_day):
@@ -106,17 +106,17 @@ def update_quotes_windows(quote_window, totals_window, json_week, user_quote, to
     format_con = format_week_json(json_dic)
 
     if user_quote > total_week:
-        string = "%.2f" % (user_quote - total_week)
+        string = "{:.2f}".format(user_quote - total_week)
         quote_window.addstr(1, 2, "You have left ")
         quote_window.addstr(1, 16, string, curses.color_pair(3))
         quote_window.addstr(1, 16 + len(string), " MB approximately")
     else:
-        string = "%.2f" % (-1 * (user_quote - total_week))
+        string = "{:.2f}".format(-1 * (user_quote - total_week))
         quote_window.addstr(1, 2, "You have run out you quote in ")
         quote_window.addstr(1, 32, string, curses.color_pair(4))
         quote_window.addstr(1, 32 + len(string), " MB approximately")
 
-    string = "%d" % (format_con[0])
+    string = "{:d}".format(format_con[0])
     quote_window.addstr(2, 2, "Today you has consumed ")
     quote_window.addstr(2, 25 + len(string), " MB approximately")
     if format_con[0] <= 50:
@@ -134,7 +134,7 @@ def update_quotes_windows(quote_window, totals_window, json_week, user_quote, to
         current_x_pos = 11 + len(day_string)
         quote_window.addstr(line, current_x_pos, " you consumed ")
         current_x_pos += 14
-        day_consume = "%d" % (format_con[days_index])
+        day_consume = "{:d}".format(format_con[days_index])
         if format_con[days_index] <= 50:
             quote_window.addstr(line, current_x_pos, day_consume, curses.color_pair(3))
         else:
@@ -144,15 +144,15 @@ def update_quotes_windows(quote_window, totals_window, json_week, user_quote, to
         days_index += 1
         line += 1
 
-    quote_window.addstr(line, 2, "Tomorrow you will have ")
-    tomorrow_quote = "%d" % (int(format_con[6]))
-    quote_window.addstr(line, 25, tomorrow_quote)
-    quote_window.addstr(line, 25 + len(tomorrow_quote), " MB approximately")
+    quote_window.addstr(line, 2, "Tomorrow \"they\" will add you ")
+    tomorrow_quote = "{:d}".format(int(format_con[6]))
+    quote_window.addstr(line, 31, tomorrow_quote)
+    quote_window.addstr(line, 31 + len(tomorrow_quote), " MB approximately")
 
     totals_window.addstr(1, 3, "You has consumed in the week ")
-    string_total_week = "%d" % total_week
+    string_total_week = "{:d}".format(int(total_week))
     totals_window.addstr(1, 32 + len(string_total_week), " of ")
-    string_user_quote = "%d" % user_quote
+    string_user_quote = "{:d}".format(int(user_quote))
     totals_window.addstr(1, 36 + len(string_total_week), string_user_quote, curses.color_pair(5))
     totals_window.addstr(1, 36 + len(string_total_week) + len(string_user_quote), " MBs")
 
@@ -162,9 +162,9 @@ def update_quotes_windows(quote_window, totals_window, json_week, user_quote, to
         totals_window.addstr(1, 32, string_total_week, curses.color_pair(4))
 
     totals_window.addstr(2, 3, "You has consumed in the month ")
-    string_total_month = "%d" % (total_month + user_quote)
+    string_total_month = "{:d}".format(total_month + user_quote)
     totals_window.addstr(2, 33 + len(string_total_month), " of ")
-    string_user_quote = "%d" % (user_quote * 5)
+    string_user_quote = "{:d}".format(user_quote * 5)
     totals_window.addstr(2, 37 + len(string_total_month), string_user_quote, curses.color_pair(5))
     totals_window.addstr(2, 37 + len(string_total_month) + len(string_user_quote), " MBs")
 
@@ -172,13 +172,6 @@ def update_quotes_windows(quote_window, totals_window, json_week, user_quote, to
         totals_window.addstr(2, 33, string_total_month, curses.color_pair(3))
     else:
         totals_window.addstr(2, 33, string_total_month, curses.color_pair(4))
-
-    # if total_month <= user_quote * 5:
-    #     cons = "%s%d%s" % (bcolors.OKGREEN, total_month + user_quote, bcolors.ENDC)
-    # else:
-    #     cons = "%s%d%s" % (bcolors.FAIL, total_month + user_quote, bcolors.ENDC)
-    #
-    # print "You has consumed in the month %s of %s%d%s MB" % (cons, bcolors.WARNING, user_quote * 5, bcolors.ENDC)
 
     quote_window.refresh()
     totals_window.refresh()
@@ -212,9 +205,12 @@ def main():
                           )
 
     argp.add_argument('-u', '--user', type=str, required=True, help="User to search", dest='user')
+    argp.add_argument('-r', '--refresh', type=float, required=False, help="Refresh time interval", dest='refresh',
+                      default=10.0)
 
     args = argp.parse_args()
     user = args.user
+    refresh = args.refresh
 
     json_quote = connect_api(user, 'quote', False, None)
     if len(json_quote) == 0:
@@ -239,6 +235,11 @@ def main():
     try:
         while True:
             json_quote = connect_api(user, 'quote', True, quote_window)
+            json_week = connect_api(user, 'week', True, quote_window)
+
+            while not json_quote or not json_week:
+                json_quote = connect_api(user, 'quote', True, quote_window)
+                json_week = connect_api(user, 'week', True, quote_window)
 
             quote_dict = json_quote[0]
             int_day = date.today().weekday()
@@ -246,13 +247,12 @@ def main():
 
             total_month = int(quote_dict['total30']) / 1000000
             total_week = float(quote_dict['total']) / 1000000
-            json_week = connect_api(user, 'week', True, quote_window)
 
             # quote_window.clear()
             quote_window.box()
             update_quotes_windows(quote_window, totals_windows, json_week, user_quote, total_month, total_week, int_day)
             # print_json_week_output(json_week, user_quote, total_month, total_week, int_day)
-            sleep(5)
+            sleep(refresh)
 
     except KeyboardInterrupt:
         pass
