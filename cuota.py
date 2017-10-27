@@ -7,6 +7,7 @@ from time import sleep
 from datetime import date
 from os import system
 import curses
+
 # from multiprocessing import Process as Task, Queue
 
 __author__ = 'eduardo'
@@ -102,7 +103,8 @@ def format_week_json(json_dic):
 #         update_window.refresh()
 
 
-def update_quotes_windows(quote_window, totals_window, json_week, user_quote, total_month, total_week, int_day):
+def update_quotes_windows(quote_window, totals_window, json_week, user_quote, total_month, total_week, int_day,
+                          interval):
     json_dic = json_week[0]
     format_con = format_week_json(json_dic)
 
@@ -146,7 +148,7 @@ def update_quotes_windows(quote_window, totals_window, json_week, user_quote, to
         line += 1
 
     quote_window.addstr(line, 2, "Tomorrow \"they\" will add you ")
-    tomorrow_quote = "{:d}".format(int(format_con[6]))
+    tomorrow_quote = "{:d}".format(int(format_con[interval - 1]))
     quote_window.addstr(line, 31, tomorrow_quote)
     quote_window.addstr(line, 31 + len(tomorrow_quote), " MB approximately")
 
@@ -208,10 +210,13 @@ def main():
     argp.add_argument('-u', '--user', type=str, required=True, help="User to search", dest='user')
     argp.add_argument('-r', '--refresh', type=float, required=False, help="Refresh time interval", dest='refresh',
                       default=10.0)
+    argp.add_argument('-i', '--interval', type=int, required=False, help="Quote interval", dest='interval',
+                      default=4)
 
     args = argp.parse_args()
     user = args.user
     refresh = args.refresh
+    interval = args.interval
 
     try:
         json_quote = connect_api(user, 'quote', False, None)
@@ -220,7 +225,6 @@ def main():
             exit(0)
     except ConnectionError:
         print "Sorry, you don't have connection right now."
-
 
     system("clear")
 
@@ -256,7 +260,8 @@ def main():
 
                 # quote_window.clear()
                 quote_window.box()
-                update_quotes_windows(quote_window, totals_windows, json_week, user_quote, total_month, total_week, int_day)
+                update_quotes_windows(quote_window, totals_windows, json_week, user_quote, total_month, total_week,
+                                      int_day, interval)
                 # print_json_week_output(json_week, user_quote, total_month, total_week, int_day)
                 sleep(refresh)
             except ConnectionError:
