@@ -224,7 +224,7 @@ def main():
             print "The user " + user + " doesn't exists"
             exit(0)
     except ConnectionError:
-        print "Sorry, you don't have connection right now."
+        print "Sorry, you don't have connection right now"
 
     system("clear")
 
@@ -265,10 +265,13 @@ def main():
                 # print_json_week_output(json_week, user_quote, total_month, total_week, int_day)
                 sleep(refresh)
             except ConnectionError:
-                # quote_window.clear()
+                quote_window.clear()
+                totals_windows.clear()
                 quote_window.box()
-                quote_window.addstr(5, 9, "Sorry, you don't have connection right now.", curses.A_REVERSE)
+                totals_windows.box()
+                quote_window.addstr(5, 9, "Sorry, you don't have connection right now", curses.A_REVERSE)
                 quote_window.refresh()
+                totals_windows.refresh()
                 sleep(refresh)
     except KeyboardInterrupt:
         pass
