@@ -2,6 +2,7 @@
 
 import requests
 from argparse import ArgumentParser
+from requests import ConnectionError
 from time import sleep
 from datetime import date
 from os import system
@@ -212,10 +213,14 @@ def main():
     user = args.user
     refresh = args.refresh
 
-    json_quote = connect_api(user, 'quote', False, None)
-    if len(json_quote) == 0:
-        print "The user " + user + " doesn't exists"
-        exit(0)
+    try:
+        json_quote = connect_api(user, 'quote', False, None)
+        if len(json_quote) == 0:
+            print "The user " + user + " doesn't exists"
+            exit(0)
+    except ConnectionError:
+        print "Sorry, you don't have connection right now."
+
 
     system("clear")
 
@@ -234,26 +239,32 @@ def main():
 
     try:
         while True:
-            json_quote = connect_api(user, 'quote', True, quote_window)
-            json_week = connect_api(user, 'week', True, quote_window)
-
-            while not json_quote or not json_week:
+            try:
                 json_quote = connect_api(user, 'quote', True, quote_window)
                 json_week = connect_api(user, 'week', True, quote_window)
 
-            quote_dict = json_quote[0]
-            int_day = date.today().weekday()
-            user_quote = int(quote_dict['cuota']) / 1000000
+                while not json_quote or not json_week:
+                    json_quote = connect_api(user, 'quote', True, quote_window)
+                    json_week = connect_api(user, 'week', True, quote_window)
 
-            total_month = int(quote_dict['total30']) / 1000000
-            total_week = float(quote_dict['total']) / 1000000
+                quote_dict = json_quote[0]
+                int_day = date.today().weekday()
+                user_quote = int(quote_dict['cuota']) / 1000000
 
-            # quote_window.clear()
-            quote_window.box()
-            update_quotes_windows(quote_window, totals_windows, json_week, user_quote, total_month, total_week, int_day)
-            # print_json_week_output(json_week, user_quote, total_month, total_week, int_day)
-            sleep(refresh)
+                total_month = int(quote_dict['total30']) / 1000000
+                total_week = float(quote_dict['total']) / 1000000
 
+                # quote_window.clear()
+                quote_window.box()
+                update_quotes_windows(quote_window, totals_windows, json_week, user_quote, total_month, total_week, int_day)
+                # print_json_week_output(json_week, user_quote, total_month, total_week, int_day)
+                sleep(refresh)
+            except ConnectionError:
+                # quote_window.clear()
+                quote_window.box()
+                quote_window.addstr(5, 9, "Sorry, you don't have connection right now.", curses.A_REVERSE)
+                quote_window.refresh()
+                sleep(refresh)
     except KeyboardInterrupt:
         pass
 
