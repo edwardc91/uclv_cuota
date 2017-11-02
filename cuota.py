@@ -195,7 +195,7 @@ def connect_api(user, request_type, using_curses, quote_window):
             print "Is not working right now"
             exit(0)
         else:
-            # quote_window.clear()
+            quote_window.clear()
             quote_window.box()
             quote_window.addstr(5, 20, "Loading...", curses.A_REVERSE)
             quote_window.refresh()
@@ -210,13 +210,13 @@ def main():
     argp.add_argument('-u', '--user', type=str, required=True, help="User to search", dest='user')
     argp.add_argument('-r', '--refresh', type=float, required=False, help="Refresh time interval", dest='refresh',
                       default=10.0)
-    argp.add_argument('-i', '--interval', type=int, required=False, help="Quote interval", dest='interval',
+    argp.add_argument('-c', '--cycle', type=int, required=False, help="Quote days cycle", dest='cycle',
                       default=4)
 
     args = argp.parse_args()
     user = args.user
     refresh = args.refresh
-    interval = args.interval
+    cycle = args.cycle
 
     try:
         json_quote = connect_api(user, 'quote', False, None)
@@ -261,7 +261,7 @@ def main():
                 # quote_window.clear()
                 quote_window.box()
                 update_quotes_windows(quote_window, totals_windows, json_week, user_quote, total_month, total_week,
-                                      int_day, interval)
+                                      int_day, cycle)
                 # print_json_week_output(json_week, user_quote, total_month, total_week, int_day)
                 sleep(refresh)
             except ConnectionError:
