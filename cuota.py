@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import requests
 from argparse import ArgumentParser
@@ -192,7 +192,7 @@ def connect_api(user, request_type, using_curses, quote_window):
         return json
     else:
         if not using_curses:
-            print "Is not working right now"
+            print("Is not working right now")
             exit(0)
         else:
             quote_window.clear()
@@ -202,7 +202,7 @@ def connect_api(user, request_type, using_curses, quote_window):
 
 
 def main():
-    argp = ArgumentParser(version="2.0",
+    argp = ArgumentParser(
                           description="Show the weekly consumption of UCLV internet quote",
                           epilog='Copyright 2017 Eduardo Miguel Hernandez under license GPL v3.0'
                           )
@@ -221,10 +221,10 @@ def main():
     try:
         json_quote = connect_api(user, 'quote', False, None)
         if len(json_quote) == 0:
-            print "The user " + user + " doesn't exists"
+            print("The user " + user + " doesn't exists")
             exit(0)
     except ConnectionError:
-        print "Sorry, you don't have connection right now"
+        print("Sorry, you don't have connection right now")
 
     system("clear")
 
