@@ -103,7 +103,8 @@ def format_week_json(json_dic):
 #         update_window.refresh()
 
 
-def update_quotes_windows(quote_window, totals_window, json_week, user_quote, total_month, total_week, int_day,
+def update_quotes_windows(quote_window, totals_window, json_week, user_quote, total_month, total_week, user_quote_total,
+                          int_day,
                           interval):
     json_dic = json_week[0]
     format_con = format_week_json(json_dic)
@@ -167,11 +168,11 @@ def update_quotes_windows(quote_window, totals_window, json_week, user_quote, to
     totals_window.addstr(2, 3, "You has consumed in the month ")
     string_total_month = "{:d}".format(total_month + user_quote)
     totals_window.addstr(2, 33 + len(string_total_month), " of ")
-    string_user_quote = "{:d}".format(user_quote * 5)
+    string_user_quote = "{:d}".format(user_quote_total)
     totals_window.addstr(2, 37 + len(string_total_month), string_user_quote, curses.color_pair(5))
     totals_window.addstr(2, 37 + len(string_total_month) + len(string_user_quote), " MBs")
 
-    if total_month <= user_quote * 5:
+    if total_month <= user_quote_total:
         totals_window.addstr(2, 33, string_total_month, curses.color_pair(3))
     else:
         totals_window.addstr(2, 33, string_total_month, curses.color_pair(4))
@@ -203,9 +204,9 @@ def connect_api(user, request_type, using_curses, quote_window):
 
 def main():
     argp = ArgumentParser(
-                          description="Show the weekly consumption of UCLV internet quote",
-                          epilog='Copyright 2017 Eduardo Miguel Hernandez under license GPL v3.0'
-                          )
+        description="Show the weekly consumption of UCLV internet quote",
+        epilog='Copyright 2017 Eduardo Miguel Hernandez under license GPL v3.0'
+    )
 
     argp.add_argument('-u', '--user', type=str, required=True, help="User to search", dest='user')
     argp.add_argument('-r', '--refresh', type=float, required=False, help="Refresh time interval", dest='refresh',
@@ -257,10 +258,12 @@ def main():
 
                 total_month = int(quote_dict['total30']) / 1000000
                 total_week = float(quote_dict['total']) / 1000000
+                user_quote_total = int(quote_dict['cuota2']) / 1000000
 
                 # quote_window.clear()
                 quote_window.box()
                 update_quotes_windows(quote_window, totals_windows, json_week, user_quote, total_month, total_week,
+                                      user_quote_total,
                                       int_day, cycle)
                 # print_json_week_output(json_week, user_quote, total_month, total_week, int_day)
                 sleep(refresh)
