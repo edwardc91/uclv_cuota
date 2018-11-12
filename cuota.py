@@ -120,7 +120,7 @@ def update_quotes_windows(quote_window, totals_window, json_week, user_quote, to
         quote_window.addstr(1, 32, string, curses.color_pair(4))
         quote_window.addstr(1, 32 + len(string), " MB approximately")
 
-    string = "{:d}".format(format_con[0])
+    string = "{:.2f}".format(format_con[0])
     quote_window.addstr(2, 2, "Today you has consumed ")
     quote_window.addstr(2, 25 + len(string), " MB approximately")
     if format_con[0] <= 50:
@@ -138,7 +138,7 @@ def update_quotes_windows(quote_window, totals_window, json_week, user_quote, to
         current_x_pos = 11 + len(day_string)
         quote_window.addstr(line, current_x_pos, " you consumed ")
         current_x_pos += 14
-        day_consume = "{:d}".format(format_con[days_index])
+        day_consume = "{:.2f}".format(format_con[days_index])
         if format_con[days_index] <= 50:
             quote_window.addstr(line, current_x_pos, day_consume, curses.color_pair(3))
         else:
@@ -166,9 +166,9 @@ def update_quotes_windows(quote_window, totals_window, json_week, user_quote, to
         totals_window.addstr(1, 32, string_total_week, curses.color_pair(4))
 
     totals_window.addstr(2, 3, "You has consumed in the month ")
-    string_total_month = "{:d}".format(total_month + user_quote)
+    string_total_month = "{:.2f}".format(total_month + user_quote)
     totals_window.addstr(2, 33 + len(string_total_month), " of ")
-    string_user_quote = "{:d}".format(user_quote_total)
+    string_user_quote = "{:.2f}".format(user_quote_total)
     totals_window.addstr(2, 37 + len(string_total_month), string_user_quote, curses.color_pair(5))
     totals_window.addstr(2, 37 + len(string_total_month) + len(string_user_quote), " MBs")
 
